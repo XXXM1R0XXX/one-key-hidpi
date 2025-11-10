@@ -22,6 +22,30 @@ System Preferences Preview:
 
 ## Nix Flake Version (NEW)
 
+The Nix Flake version offers **two ways to use** this tool:
+
+1. **📦 Standalone Package** (Easy): Install and run the interactive script via Nix
+2. **⚙️ nix-darwin Module** (Declarative): Configure displays in your system configuration
+
+### 📦 Standalone Package Installation
+
+Perfect for quick setup or if you don't use nix-darwin:
+
+```bash
+# Run directly (no installation needed)
+nix run github:XXXM1R0XXX/one-key-hidpi
+
+# Or install to your profile
+nix profile install github:XXXM1R0XXX/one-key-hidpi
+one-key-hidpi  # Run the interactive script
+```
+
+This gives you the familiar interactive menu from the original bash script, but packaged with Nix for reproducibility.
+
+### ⚙️ nix-darwin Module (Declarative)
+
+For users who want declarative, version-controlled configuration:
+
 ### ✨ Why Use the Nix Flake Version?
 
 - **Declarative**: Define display settings in code, not through interactive menus
@@ -32,7 +56,7 @@ System Preferences Preview:
 - **CI/CD Ready**: Automate deployment
 - **Type Safe**: Nix validates your configuration
 
-### Quick Start
+### Quick Start (nix-darwin Module)
 
 **Full documentation**: [README-FLAKE.md](README-FLAKE.md)
 

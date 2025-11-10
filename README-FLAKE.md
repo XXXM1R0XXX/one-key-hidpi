@@ -1,18 +1,39 @@
 # one-key-hidpi - Nix Flake for macOS HiDPI
 
-> Declarative macOS HiDPI configuration for external displays using nix-darwin
+> Declarative macOS HiDPI configuration for external displays using nix-darwin, or as a standalone Nix package
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Nix](https://img.shields.io/badge/Nix-Flake-blue.svg)](https://nixos.org/)
 [![macOS](https://img.shields.io/badge/macOS-Compatible-green.svg)](https://www.apple.com/macos/)
 
-This project provides a native [Nix Flake](https://nixos.wiki/wiki/Flakes) solution for managing macOS external display HiDPI settings through [nix-darwin](https://github.com/LnL7/nix-darwin). It eliminates the need for interactive shell scripts and enables version-controlled, reproducible display configurations.
+This project provides a native [Nix Flake](https://nixos.wiki/wiki/Flakes) solution for managing macOS external display HiDPI settings. Use it as a **standalone package** for quick setup, or integrate it with [nix-darwin](https://github.com/LnL7/nix-darwin) for declarative, version-controlled display configurations.
+
+## Two Ways to Use
+
+### 📦 Option 1: Standalone Package (Quick & Easy)
+
+Perfect if you just want to enable HiDPI without nix-darwin:
+
+```bash
+# Run directly (no installation needed)
+nix run github:XXXM1R0XXX/one-key-hidpi
+
+# Or install to your profile
+nix profile install github:XXXM1R0XXX/one-key-hidpi
+one-key-hidpi  # Run the interactive script
+```
+
+This provides the familiar interactive menu from the original bash script, but packaged with Nix for reproducibility.
+
+### ⚙️ Option 2: nix-darwin Module (Declarative)
+
+For full declarative configuration with version control and rollback capabilities - see [Quick Start](#quick-start) below.
 
 ## Features
 
 ✨ **Declarative Configuration**: Define display settings in your nix-darwin config  
 🔄 **Reproducible**: Same configuration produces identical results across systems  
-📦 **Version Controlled**: Track display configuration changes with git  
+📦 **Standalone Package**: Run as a Nix package without nix-darwin  
 🎯 **Easy Rollback**: Use nix-darwin generations to revert changes  
 🖥️ **Multi-Display**: Configure multiple external displays simultaneously  
 🎨 **Display Icons**: Optional system preference icons (iMac, MacBook, LG, etc.)  
@@ -21,7 +42,7 @@ This project provides a native [Nix Flake](https://nixos.wiki/wiki/Flakes) solut
 🍎 **Apple Silicon + Intel**: Works on both architectures  
 💾 **Automatic Backups**: Original configurations backed up before changes  
 
-## Quick Start
+## Quick Start (nix-darwin Module)
 
 ### 1. Add to Your Flake
 
