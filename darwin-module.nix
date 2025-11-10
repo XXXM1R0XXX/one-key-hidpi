@@ -5,8 +5,7 @@ let
   cfg = config.programs.hidpi;
 in
 {
-  # --- ОПЦИИ МОДУЛЯ ---
-  # (Эта часть остается без изменений, она спроектирована правильно)
+  # --- Опции модуля (без изменений) ---
   options.programs.hidpi = {
     enable = lib.mkEnableOption "Enable declarative HiDPI settings";
     displays = lib.mkOption {
@@ -36,13 +35,10 @@ in
     };
   };
 
-  # --- КОНФИГУРАЦИЯ СИСТЕМЫ ---
+  # --- Конфигурация системы (с исправлениями) ---
   config = lib.mkIf cfg.enable {
-    # Используем lib.listToAttrs - правильную функцию для преобразования списка в сет.
     system.activationScripts = lib.listToAttrs (map (display:
       let
-        # --- ВСЯ ЛОГИКА ГЕНЕРАЦИИ ПЕРЕНЕСЕНА ВНУТРЬ `let` ---
-
         parseRes = res: {
           width = lib.toInt (builtins.elemAt (lib.splitString "x" res) 0);
           height = lib.toInt (builtins.elemAt (lib.splitString "x" res) 1);
@@ -58,17 +54,17 @@ in
 
         addFlags = suffix: res: (lib.substring 0 11 (encodeResolution res.width res.height)) + suffix;
 
-        # Эта функция теперь возвращает список готовых base64-строк для plist
         resToData = type: resolutions:
           let
             suffixMap = {
-              type1 = "A";
-              type2 = "AAAABACAAAA==";
-              type3 = "AAAAB";
-              type4 = "AAAAJAKAAAA==";
-              custom = "AAAAB";
+              type1 = "A"; type2 = "AAAABACAAAA=="; type3 = "AAAAB";
+              type4 = "AAAAJAKAAAA=="; custom = "AAAAB";
             };
             applyFlags = addFlags (suffixMap.${type});
+          #
+          # !!! ВОТ ЗДЕСЬ БЫЛА ОШИБКА !!!
+          # Мы убрали лишнее кодирование pkgs.lib.toBase64
+          #
           in map (res: applyFlags (parseRes res)) resolutions;
 
         allResolutions =
@@ -87,19 +83,24 @@ in
         });
 
       in
-      # listToAttrs ожидает на выходе сет с атрибутами 'name' и 'value'
       {
         name = "hidpi-override-${display.vendorId}-${display.productId}";
         value = {
           text = ''
+            # --- ОТЛАДКА ---
+            # Эта строка будет меняться при каждой сборке, заставляя скрипт запускаться
+            echo "--- HiDPI Activation Script running at $(date) ---"
+
             echo "Installing HiDPI override for display ${display.vendorId}-${display.productId}"
             TARGET_DIR="/Library/Displays/Contents/Resources/Overrides/DisplayVendorID-${display.vendorId}"
             
             mkdir -p "$TARGET_DIR"
             
+            # Копируем наш сгенерированный файл из хранилища Nix
             cp "${plistFile}" "$TARGET_DIR/DisplayProductID-${display.productId}"
             
-            echo "HiDPI override for ${display.vendorId}-${display.productId} installed."
+            echo "HiDPI override file created at $TARGET_DIR/DisplayProductID-${display.productId}"
+            echo "--- HiDPI Activation Script finished ---"
           '';
         };
       }) cfg.displays);
