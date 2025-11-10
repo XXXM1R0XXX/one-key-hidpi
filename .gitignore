@@ -1,0 +1,10 @@
+# Nix build artifacts
+result
+result-*
+
+# macOS
+.DS_Store
+
+# Temporary files
+tmp/
+*.tmp
