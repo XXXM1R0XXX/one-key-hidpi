@@ -38,6 +38,42 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
+          # Main one-key-hidpi interactive script package
+          one-key-hidpi = pkgs.stdenv.mkDerivation {
+            name = "one-key-hidpi";
+            version = "1.0.0";
+            
+            src = ./.;
+            
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            
+            installPhase = ''
+              mkdir -p $out/bin
+              mkdir -p $out/share/one-key-hidpi
+              
+              # Copy the main script
+              cp hidpi.sh $out/bin/one-key-hidpi
+              chmod +x $out/bin/one-key-hidpi
+              
+              # Copy supporting files
+              cp Icons.plist $out/share/one-key-hidpi/
+              cp -r displayIcons $out/share/one-key-hidpi/
+              
+              # Wrap the script to set the correct working directory
+              wrapProgram $out/bin/one-key-hidpi \
+                --set ONE_KEY_HIDPI_DIR "$out/share/one-key-hidpi" \
+                --prefix PATH : "${pkgs.coreutils}/bin"
+            '';
+            
+            meta = with pkgs.lib; {
+              description = "Interactive tool to enable HiDPI mode on macOS external displays";
+              homepage = "https://github.com/XXXM1R0XXX/one-key-hidpi";
+              license = licenses.mit;
+              platforms = platforms.darwin;
+              maintainers = [ ];
+            };
+          };
+
           # EDID extraction tool
           edid-extractor = pkgs.writeShellApplication {
             name = "edid-extractor";
@@ -54,6 +90,9 @@
               cp -r $src/* $out/
             '';
           };
+          
+          # Set default package
+          default = self.packages.${system}.one-key-hidpi;
         }
       );
 

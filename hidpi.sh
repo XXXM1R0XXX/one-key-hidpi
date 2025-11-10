@@ -11,7 +11,7 @@ cat <<EEF
 ============================================
 EEF
 
-currentDir="$(cd $(dirname -- $0) && pwd)"
+currentDir="${ONE_KEY_HIDPI_DIR:-$(cd $(dirname -- $0) && pwd)}"
 systemLanguage=($(locale | grep LANG | sed s/'LANG='// | tr -d '"' | cut -d "." -f 1))
 is_applesilicon=$([[ "$(uname -m)" == "arm64" ]] && echo true || echo false)
 
