@@ -29,19 +29,37 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.etc = lib.foldl' (acc: display: acc // {
-      "Displays/Contents/Resources/Overrides/DisplayVendorID-${display.vendorId}/DisplayProductID-${display.productId}" = {
-        source = (pkgs.formats.plist {}).generate "DisplayProductID-${display.productId}" {
-          DisplayProductID = lib.stringToPath.fromHex display.productId;
-          DisplayVendorID = lib.stringToPath.fromHex display.vendorId;
-          scale-resolutions = map resolutionToData display.resolutions;
-        };
-        # ----- ИЗМЕНЕНИЯ ЗДЕСЬ -----
-        # Удаляем строки user и group, так как они вызывают ошибку.
-        # Nix-darwin по умолчанию установит правильного владельца (root:wheel).
-        # Добавляем права доступа для большей надежности.
-        mode = "0644";
+    # Мы будем динамически генерировать набор скриптов активации,
+    # по одному для каждого дисплея.
+    system.activationScripts = lib.foldl' (acc: display: acc // {
+      # Генерируем уникальное имя для каждого скрипта
+      "hidpi-override-${display.vendorId}-${display.productId}" = {
+        # 'let' позволяет нам сгенерировать plist-файл и получить путь к нему
+        let
+          # 1. Декларативно создаем идеальный plist-файл.
+          #    Результатом будет путь в /nix/store/...
+          plistFile = (pkgs.formats.plist {}).generate "DisplayProductID-${display.productId}" {
+            DisplayProductID = lib.stringToPath.fromHex display.productId;
+            DisplayVendorID = lib.stringToPath.fromHex display.vendorId;
+            scale-resolutions = map resolutionToData display.resolutions;
+          };
+        in
+        # 2. Создаем простой и надежный скрипт для копирования этого файла.
+        text = ''
+          echo "Installing HiDPI override for display ${display.vendorId}-${display.productId}"
+          TARGET_DIR="/Library/Displays/Contents/Resources/Overrides/DisplayVendorID-${display.vendorId}"
+          
+          # Создаем целевую директорию
+          mkdir -p "$TARGET_DIR"
+          
+          # Копируем наш сгенерированный файл из хранилища Nix
+          # Переменная ${plistFile} будет заменена Nix на реальный путь в /nix/store
+          cp "${plistFile}" "$TARGET_DIR/DisplayProductID-${display.productId}"
+          
+          # Устанавливаем права доступа (на всякий случай)
+          chmod 644 "$TARGET_DIR/DisplayProductID-${display.productId}"
+        '';
       };
-    }) {} cfg.displays;
+    }) {} cfg.displays; # Начинаем с пустого набора атрибутов и добавляем по одному скрипту на каждый дисплей
   };
 }
