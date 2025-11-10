@@ -7,7 +7,14 @@ is_applesilicon=$([[ "$(uname -m)" == "arm64" ]] && echo true || echo false)
 
 function get_displays_intel() {
     local index=0
-    local gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
+    local gDisplayInf
+    local MonitorName
+    local VendorID
+    local ProductID
+    
+    # Using readarray/mapfile is better but not available in older bash
+    # shellcheck disable=SC2207
+    gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
     
     if [[ "${#gDisplayInf[@]}" -eq 0 ]]; then
         echo "No monitors found."
@@ -15,8 +22,8 @@ function get_displays_intel() {
     fi
     
     for display in "${gDisplayInf[@]}"; do
-        let index++
-        MonitorName=("$(echo ${display:190:24} | xxd -p -r)")
+        (( index++ ))
+        MonitorName="$(echo "${display:190:24}" | xxd -p -r)"
         VendorID=${display:16:4}
         ProductID=${display:22:2}${display:20:2}
         
@@ -28,18 +35,23 @@ function get_displays_intel() {
             MonitorName="LG Display"
         fi
         
-        printf " %d | %s | %s | %s\n" ${index} ${VendorID} ${ProductID} "${MonitorName}"
+        printf " %d | %s | %s | %s\n" "${index}" "${VendorID}" "${ProductID}" "${MonitorName}"
     done
 }
 
 function get_displays_applesilicon() {
     local index=0
     local prodnamesindex=0
+    local vends prods prodnames
+    local MonitorName VendorID ProductID
     
-    local vends=($(ioreg -l | grep "DisplayAttributes" | sed -n 's/.*"LegacyManufacturerID"=\([0-9]*\).*/\1/p'))
-    local prods=($(ioreg -l | grep "DisplayAttributes" | sed -n 's/.*"ProductID"=\([0-9]*\).*/\1/p'))
+    # shellcheck disable=SC2207
+    vends=($(ioreg -l | grep "DisplayAttributes" | sed -n 's/.*"LegacyManufacturerID"=\([0-9]*\).*/\1/p'))
+    # shellcheck disable=SC2207
+    prods=($(ioreg -l | grep "DisplayAttributes" | sed -n 's/.*"ProductID"=\([0-9]*\).*/\1/p'))
     
     set -o noglob
+    # shellcheck disable=SC2207
     IFS=$'\n' prodnames=($(ioreg -l | grep "DisplayAttributes" | sed -n 's/.*"ProductName"="\([^"]*\)".*/\1/p'))
     set +o noglob
     
@@ -48,24 +60,24 @@ function get_displays_applesilicon() {
         return
     fi
     
-    for prod in "${prods[@]}"; do
+    for _ in "${prods[@]}"; do
         MonitorName=${prodnames[$prodnamesindex]}
-        VendorID=$(printf "%04x" ${vends[$index]})
-        ProductID=$(printf "%04x" ${prods[$index]})
+        VendorID=$(printf "%04x" "${vends[$index]}")
+        ProductID=$(printf "%04x" "${prods[$index]}")
         
-        let index++
-        let prodnamesindex++
+        (( index++ ))
+        (( prodnamesindex++ ))
         
         if [[ ${VendorID} == 0610 ]]; then
             MonitorName="Apple Display"
-            let prodnamesindex--
+            (( prodnamesindex-- ))
         fi
         
         if [[ ${VendorID} == 1e6d ]]; then
             MonitorName="LG Display"
         fi
         
-        printf " %d | %s | %s | %s\n" ${index} ${VendorID} ${ProductID} "${MonitorName}"
+        printf " %d | %s | %s | %s\n" "${index}" "${VendorID}" "${ProductID}" "${MonitorName}"
     done
 }
 
